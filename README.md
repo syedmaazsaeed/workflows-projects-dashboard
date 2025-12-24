@@ -1,47 +1,62 @@
 # Automation Portal
 
-A full-stack web application for managing n8n workflows, projects, webhooks, and AI-powered documentation search.
+Automation Portal is a full-stack web application built as an internal tool for managing n8n workflows, related projects, webhooks, and documentation from a single interface.
+As automation systems grow, workflows tend to become scattered across environments, versions are hard to track, webhook behavior becomes unclear, and documentation quickly falls out of sync with reality. This project was created to solve those problems by adding a structured control layer on top of n8n.Automation Portal focuses on visibility, organization, and operational clarity for teams that rely heavily on automation.
 
 <!-- ![Automation Hub](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)
 ![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)
 ![NestJS](https://img.shields.io/badge/NestJS-10-red.svg) -->
 
+## What Automation Portal Does
+
+- Stores and versions n8n workflow JSON files
+- Extracts workflow metadata (nodes, triggers, services)
+- Organizes workflows by project
+- Provides secure webhook endpoints
+- Centralizes internal documentation
+- Offers optional AI-assisted search across workflows and docs
+
+
 ## Features
 
 ### 🔄 Workflow Management
 - Upload, store, and version n8n workflow JSON files
-- Extract and display workflow metadata (nodes, triggers, services)
+- Inspect workflow structure, nodes, and triggers
 - Visual workflow graph representation
-- Compare versions with diff viewer
-- Sync with n8n instances (pull/push)
+- Compare workflow versions using a diff viewer
+- Optional synchronization with external n8n instances
 
 ### 📁 Project Organization
-- Create projects with unique keys
-- Manage team members with RBAC (Admin, Developer, Viewer)
-- Global search across workflows, docs, and webhook events
-- Markdown documentation with live preview
+- Group workflows under projects with unique keys
+- Manage team members using role-based access control (Admin, Developer, Viewer)
+- Global search across workflows, documentation, and webhook events
+- Markdown-based documentation with live preview
 
 ### 🔗 Webhook Management
-- Create secure webhook endpoints
-- Multiple routing options: Forward URL, Trigger n8n, Internal workflow
-- Transform rules with JSONPath extraction
-- Real-time event logging via WebSocket
-- Event replay functionality
+- Create secure, project-scoped webhook endpoints
+- Multiple routing options:
+  - Forward requests to external URLs
+  - Trigger n8n workflows
+  - Handle requests internally
+- Request transformation using JSONPath rules
+- Real-time event logging
+- Webhook event replay for debugging and testing
 
-### 🤖 AI Chatbot (RAG)
-- Ask questions about your workflows and documentation
-- Powered by pgvector for semantic search
-- Citations with source references
-- Streaming responses
-- Configurable LLM providers (OpenAI, Anthropic)
+###  AI Assisted Search
+- Ask questions about workflows and documentation
+- Semantic search powered by pgvector
+- Source-aware responses based on indexed data
+- Supports configurable LLM providers (OpenAI, Anthropic)
 
 ### 🔐 Security
-- JWT authentication with RBAC
-- Encrypted secrets storage
-- Webhook secret hashing (bcrypt)
+- JWT-based authentication
+- Role-based access control
+- Encrypted storage for sensitive secrets
+- Webhook secret hashing
 - Rate limiting on sensitive endpoints
-- Comprehensive audit logging
+- Audit logging for important actions
+
 
 ## Tech Stack
 
@@ -58,20 +73,17 @@ A full-stack web application for managing n8n workflows, projects, webhooks, and
 
 ### Prerequisites
 - Docker & Docker Compose
-- Node.js 20+ (for local development)
+- Node.js
 - Git
 
 ### 1. Clone and Configure
 
-```bash
-git clone <repository-url>
+git clone (https://github.com/syedmaazsaeed/workflows-projects-dashboard.git)
 cd workflows-projects-dashboard
 
-# Copy environment file
-cp env.example .env
+# Environment file
+env.example(.env with your settings API Keys)
 
-# Edit .env with your settings (especially API keys)
-```
 
 ### 2. Start with Docker Compose
 
@@ -87,13 +99,6 @@ docker compose logs -f
 # - Backend API: http://localhost:4000
 # - API Docs: http://localhost:4000/api/docs
 ```
-
-<!-- ### 3. Seed Data (Optional)
-
-```bash
-# Run seed script to create demo data
-docker compose exec api npm run seed
-``` -->
 
 ### 3. Login
 
@@ -144,54 +149,6 @@ Public webhook receiver:
 ```bash
 POST /api/webhooks/:projectKey/:hookKey
 Header: x-webhook-secret: <secret>
-```
-
-## Project Structure
-
-```
-workflows-projects-dashboard/
-├── docker-compose.yml
-├── env.example
-├── README.md
-├── database/
-│   └── init.sql              # Database schema
-├── backend/
-│   ├── Dockerfile
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── src/
-│       ├── main.ts
-│       ├── app.module.ts
-│       ├── config/           # Configuration
-│       ├── common/           # Shared utilities
-│       ├── database/         # Database connection
-│       └── modules/
-│           ├── auth/         # Authentication
-│           ├── projects/     # Projects CRUD
-│           ├── workflows/    # Workflows & versions
-│           ├── webhooks/     # Webhooks & events
-│           ├── documents/    # Documentation
-│           ├── secrets/      # Encrypted secrets
-│           ├── chat/         # AI chatbot
-│           ├── vector/       # RAG pipeline
-│           └── audit/        # Audit logging
-└── frontend/
-    ├── Dockerfile
-    ├── package.json
-    ├── next.config.js
-    ├── tailwind.config.ts
-    └── app/
-        ├── layout.tsx
-        ├── (auth)/           # Login/Register
-        └── (protected)/
-            ├── dashboard/
-            └── projects/
-                └── [projectKey]/
-                    ├── workflows/
-                    ├── webhooks/
-                    ├── docs/
-                    ├── secrets/
-                    └── chat/
 ```
 
 ## Environment Variables
