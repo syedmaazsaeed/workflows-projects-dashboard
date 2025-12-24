@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
+import { Toaster } from '@/components/ui/toaster';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -21,11 +22,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     checkAuth();
+    // Initialize theme from localStorage
+    const theme = localStorage.getItem('theme') || 'dark';
+    const root = document.documentElement;
+    if (theme === 'system') {
+      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.classList.toggle('dark', systemDark);
+      root.classList.toggle('light', !systemDark);
+    } else {
+      root.classList.toggle('dark', theme === 'dark');
+      root.classList.toggle('light', theme === 'light');
+    }
   }, [checkAuth]);
 
   return (
     <QueryClientProvider client={queryClient}>
       {children}
+      <Toaster />
     </QueryClientProvider>
   );
 }

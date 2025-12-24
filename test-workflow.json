@@ -1,0 +1,109 @@
+{
+  "name": "Customer Notification Flow",
+  "nodes": [
+    {
+      "id": "webhook-1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "path": "customer-notify",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "set-1",
+      "name": "Prepare Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "customerName",
+              "value": "={{ $json.name }}"
+            },
+            {
+              "name": "customerEmail",
+              "value": "={{ $json.email }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-1",
+      "name": "Send to CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.crm.example.com/customers",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $json.customerName }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ $json.customerEmail }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "email-1",
+      "name": "Send Welcome Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [650, 400],
+      "parameters": {
+        "fromEmail": "hello@example.com",
+        "toEmail": "={{ $json.customerEmail }}",
+        "subject": "Welcome {{ $json.customerName }}!",
+        "text": "Hi {{ $json.customerName }},\n\nWelcome to our platform!\n\nBest regards,\nThe Team"
+      }
+    },
+    {
+      "id": "slack-1",
+      "name": "Notify Team",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [850, 300],
+      "parameters": {
+        "channel": "#new-customers",
+        "text": "🎉 New customer signed up: {{ $json.customerName }} ({{ $json.customerEmail }})"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Prepare Data", "type": "main", "index": 0 }]]
+    },
+    "Prepare Data": {
+      "main": [
+        [
+          { "node": "Send to CRM", "type": "main", "index": 0 },
+          { "node": "Send Welcome Email", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Send to CRM": {
+      "main": [[{ "node": "Notify Team", "type": "main", "index": 0 }]]
+    },
+    "Send Welcome Email": {
+      "main": [[{ "node": "Notify Team", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": ["customer", "notification", "email", "slack"]
+}
+

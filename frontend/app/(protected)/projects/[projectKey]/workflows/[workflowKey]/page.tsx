@@ -50,8 +50,11 @@ export default function WorkflowDetailPage() {
     try {
       await api.uploadWorkflowJson(projectKey, workflowKey, file);
       queryClient.invalidateQueries({ queryKey: ['workflowVersions', projectKey, workflowKey] });
+      queryClient.invalidateQueries({ queryKey: ['workflow', projectKey, workflowKey] });
+      alert('✅ Workflow JSON uploaded successfully!');
     } catch (error) {
       console.error('Upload failed:', error);
+      alert(`❌ Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setUploading(false);
       if (fileInputRef.current) {

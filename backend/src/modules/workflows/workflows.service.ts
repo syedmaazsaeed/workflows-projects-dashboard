@@ -163,13 +163,18 @@ export class WorkflowsService {
       await this.workflowRepository.save(workflow);
     }
 
-    // Index for vector search
-    await this.vectorService.indexWorkflowVersion(
-      workflow.projectId,
-      savedVersion.id,
-      parsedJson,
-      metadata,
-    );
+    // Index for vector search (non-blocking - don't fail upload if this fails)
+    try {
+      await this.vectorService.indexWorkflowVersion(
+        workflow.projectId,
+        savedVersion.id,
+        parsedJson,
+        metadata,
+      );
+    } catch (error) {
+      // Log but don't fail the upload
+      console.warn('Vector indexing failed (non-critical):', error);
+    }
 
     await this.auditService.log({
       actorUserId: userId,

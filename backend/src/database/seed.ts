@@ -20,6 +20,15 @@ async function seed() {
   const queryRunner = AppDataSource.createQueryRunner();
 
   try {
+    // Create pgvector extension (for vector search)
+    console.log('📦 Setting up pgvector extension...');
+    try {
+      await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS vector`);
+      console.log('✅ pgvector extension ready');
+    } catch (error) {
+      console.warn('⚠️  pgvector extension not available (optional for vector search)');
+    }
+
     // Create admin user
     const adminId = uuidv4();
     const passwordHash = await bcrypt.hash('Admin123!', 12);

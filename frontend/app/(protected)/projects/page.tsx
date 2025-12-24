@@ -19,7 +19,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { formatRelativeTime, slugify } from '@/lib/utils';
-import { FolderKanban, Plus, Search, ArrowRight } from 'lucide-react';
+import { exportProjects } from '@/lib/export-utils';
+import { FolderKanban, Plus, Search, ArrowRight, Download, Upload } from 'lucide-react';
 
 export default function ProjectsPage() {
   const queryClient = useQueryClient();
@@ -42,6 +43,9 @@ export default function ProjectsPage() {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setDialogOpen(false);
       setNewProject({ name: '', projectKey: '', description: '' });
+    },
+    onError: (error: Error) => {
+      alert(`❌ Failed to create project: ${error.message}`);
     },
   });
 
@@ -68,69 +72,91 @@ export default function ProjectsPage() {
             Manage your automation projects
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Project
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create Project</DialogTitle>
-              <DialogDescription>
-                Add a new project to organize your workflows and webhooks.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Project Name</Label>
-                <Input
-                  id="name"
-                  placeholder="My Automation Project"
-                  value={newProject.name}
-                  onChange={(e) => handleNameChange(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="key">Project Key</Label>
-                <Input
-                  id="key"
-                  placeholder="my-automation-project"
-                  value={newProject.projectKey}
-                  onChange={(e) =>
-                    setNewProject({ ...newProject, projectKey: e.target.value })
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  URL-friendly identifier (lowercase, hyphens)
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description (optional)</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Brief description of this project..."
-                  value={newProject.description}
-                  onChange={(e) =>
-                    setNewProject({ ...newProject, description: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancel
+        <div className="flex gap-2">
+          {projects && projects.length > 0 && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportProjects(projects, { format: 'json', includeMetadata: true })}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export JSON
               </Button>
               <Button
-                onClick={() => createMutation.mutate(newProject)}
-                disabled={!newProject.name || !newProject.projectKey || createMutation.isPending}
+                variant="outline"
+                size="sm"
+                onClick={() => exportProjects(projects, { format: 'csv' })}
               >
-                {createMutation.isPending ? 'Creating...' : 'Create Project'}
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </>
+          )}
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                New Project
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create Project</DialogTitle>
+                <DialogDescription>
+                  Add a new project to organize your workflows and webhooks.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Project Name</Label>
+                  <Input
+                    id="name"
+                    placeholder="My Automation Project"
+                    value={newProject.name}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="key">Project Key</Label>
+                  <Input
+                    id="key"
+                    placeholder="my-automation-project"
+                    value={newProject.projectKey}
+                    onChange={(e) =>
+                      setNewProject({ ...newProject, projectKey: e.target.value })
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    URL-friendly identifier (lowercase, hyphens)
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description (optional)</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Brief description of this project..."
+                    value={newProject.description}
+                    onChange={(e) =>
+                      setNewProject({ ...newProject, description: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => createMutation.mutate(newProject)}
+                  disabled={!newProject.name || !newProject.projectKey || createMutation.isPending}
+                >
+                  {createMutation.isPending ? 'Creating...' : 'Create Project'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Search */}

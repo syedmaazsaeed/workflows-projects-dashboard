@@ -53,12 +53,18 @@ export default function SecretsPage() {
       setDialogOpen(false);
       setNewSecret({ key: '', value: '' });
     },
+    onError: (error: Error) => {
+      alert(`❌ Failed to create secret: ${error.message}`);
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (secretId: string) => api.deleteSecret(projectKey, secretId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['secrets', projectKey] });
+    },
+    onError: (error: Error) => {
+      alert(`❌ Failed to delete secret: ${error.message}`);
     },
   });
 

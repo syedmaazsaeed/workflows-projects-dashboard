@@ -9,13 +9,15 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
   createTypeOrmOptions(): TypeOrmModuleOptions {
     const databaseUrl = this.configService.get<string>('database.url');
 
+    const isDevelopment = this.configService.get('nodeEnv') === 'development';
+    
     if (databaseUrl) {
       return {
         type: 'postgres',
         url: databaseUrl,
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-        synchronize: false, // Use migrations in production
-        logging: this.configService.get('nodeEnv') === 'development',
+        synchronize: isDevelopment, // Auto-sync in development
+        logging: isDevelopment,
         ssl: this.configService.get('nodeEnv') === 'production' 
           ? { rejectUnauthorized: false } 
           : false,
@@ -30,8 +32,8 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       password: this.configService.get<string>('database.password'),
       database: this.configService.get<string>('database.database'),
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-      synchronize: false,
-      logging: this.configService.get('nodeEnv') === 'development',
+      synchronize: isDevelopment, // Auto-sync in development
+      logging: isDevelopment,
     };
   }
 }

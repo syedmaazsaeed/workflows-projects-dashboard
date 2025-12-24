@@ -157,7 +157,9 @@ class ApiClient {
     );
 
     if (!response.ok) {
-      throw new Error('Upload failed');
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData?.error?.message || errorData?.message || `Upload failed (${response.status})`;
+      throw new Error(errorMessage);
     }
 
     return response.json();
@@ -302,6 +304,29 @@ class ApiClient {
   // Audit
   async getAuditLogs(projectKey: string) {
     return this.request<any[]>(`/projects/${projectKey}/audit`);
+  }
+
+  // Analytics
+  async getAnalytics(projectKey?: string, timeRange?: string) {
+    const params = new URLSearchParams();
+    if (projectKey) params.append('projectKey', projectKey);
+    if (timeRange) params.append('timeRange', timeRange);
+    return this.request<any>(`/analytics?${params.toString()}`);
+  }
+
+  async getActivityFeed(projectKey?: string, limit?: number) {
+    const params = new URLSearchParams();
+    if (projectKey) params.append('projectKey', projectKey);
+    if (limit) params.append('limit', limit.toString());
+    return this.request<any[]>(`/analytics/activity?${params.toString()}`);
+  }
+
+  // Search
+  async globalSearch(query: string, filters?: { type?: string; projectKey?: string }) {
+    const params = new URLSearchParams({ q: query });
+    if (filters?.type) params.append('type', filters.type);
+    if (filters?.projectKey) params.append('projectKey', filters.projectKey);
+    return this.request<{ results: any[] }>(`/search?${params.toString()}`);
   }
 }
 

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { formatRelativeTime } from '@/lib/utils';
+import { ActivityFeed } from '@/components/activity-feed';
 import {
   FolderKanban,
   Workflow,
@@ -14,12 +15,54 @@ import {
   Activity,
   Plus,
   ArrowRight,
+  BarChart3,
 } from 'lucide-react';
 
 export default function DashboardPage() {
   const { data: projects, isLoading: projectsLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: () => api.getProjects(),
+  });
+
+  // Fetch stats for all projects
+  const { data: dashboardStats } = useQuery({
+    queryKey: ['dashboardStats', projects],
+    queryFn: async () => {
+      if (!projects || projects.length === 0) {
+        return { workflows: 0, webhooks: 0, events: 0 };
+      }
+      
+      let totalWorkflows = 0;
+      let totalWebhooks = 0;
+      
+      // Fetch workflows and webhooks for each project
+      const results = await Promise.allSettled(
+        projects.map(async (project: any) => {
+          const [workflows, webhooks] = await Promise.all([
+            api.getWorkflows(project.projectKey).catch(() => []),
+            api.getWebhooks(project.projectKey).catch(() => []),
+          ]);
+          return {
+            workflows: workflows?.length || 0,
+            webhooks: webhooks?.length || 0,
+          };
+        })
+      );
+      
+      results.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          totalWorkflows += result.value.workflows;
+          totalWebhooks += result.value.webhooks;
+        }
+      });
+      
+      return { 
+        workflows: totalWorkflows, 
+        webhooks: totalWebhooks, 
+        events: 0 // Events need a dedicated endpoint
+      };
+    },
+    enabled: !!projects && projects.length > 0,
   });
 
   const stats = [
@@ -32,21 +75,21 @@ export default function DashboardPage() {
     },
     {
       label: 'Workflows',
-      value: '—',
+      value: dashboardStats?.workflows ?? 0,
       icon: Workflow,
       color: 'text-purple-500',
       bgColor: 'bg-purple-500/10',
     },
     {
       label: 'Webhooks',
-      value: '—',
+      value: dashboardStats?.webhooks ?? 0,
       icon: Webhook,
       color: 'text-green-500',
       bgColor: 'bg-green-500/10',
     },
     {
       label: 'Events (24h)',
-      value: '—',
+      value: dashboardStats?.events ?? 0,
       icon: Activity,
       color: 'text-orange-500',
       bgColor: 'bg-orange-500/10',
@@ -177,19 +220,21 @@ export default function DashboardPage() {
         </Card>
 
         <Card className="hover:border-primary/50 transition-colors cursor-pointer">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-purple-500/10">
-                <Workflow className="h-5 w-5 text-purple-500" />
+          <Link href="/analytics">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-purple-500/10">
+                  <BarChart3 className="h-5 w-5 text-purple-500" />
+                </div>
+                <div>
+                  <p className="font-medium">View Analytics</p>
+                  <p className="text-sm text-muted-foreground">
+                    Insights and performance metrics
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="font-medium">Upload Workflow</p>
-                <p className="text-sm text-muted-foreground">
-                  Import n8n workflow JSON
-                </p>
-              </div>
-            </div>
-          </CardContent>
+            </CardContent>
+          </Link>
         </Card>
 
         <Card className="hover:border-primary/50 transition-colors cursor-pointer">
@@ -203,6 +248,37 @@ export default function DashboardPage() {
                 <p className="text-sm text-muted-foreground">
                   Set up a new webhook endpoint
                 </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Activity Feed */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ActivityFeed limit={5} compact />
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Stats</CardTitle>
+            <CardDescription>Overview of your automation hub</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Total Projects</span>
+                <span className="text-lg font-semibold">{projects?.length || 0}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Total Workflows</span>
+                <span className="text-lg font-semibold">{dashboardStats?.workflows ?? 0}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Total Webhooks</span>
+                <span className="text-lg font-semibold">{dashboardStats?.webhooks ?? 0}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Events (24h)</span>
+                <span className="text-lg font-semibold">{dashboardStats?.events ?? 0}</span>
               </div>
             </div>
           </CardContent>

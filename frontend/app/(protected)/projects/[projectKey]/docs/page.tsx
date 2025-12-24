@@ -71,6 +71,9 @@ export default function DocsPage() {
       setDialogOpen(false);
       setNewDoc({ title: '', docType: 'NOTES', contentMd: '' });
     },
+    onError: (error: Error) => {
+      alert(`❌ Failed to create document: ${error.message}`);
+    },
   });
 
   const filteredDocs = documents?.filter((doc: any) =>

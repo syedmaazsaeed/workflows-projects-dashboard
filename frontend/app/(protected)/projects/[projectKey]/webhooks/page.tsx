@@ -57,6 +57,9 @@ export default function WebhooksPage() {
       queryClient.invalidateQueries({ queryKey: ['webhooks', projectKey] });
       setCreatedSecret(result.secret);
     },
+    onError: (error: Error) => {
+      alert(`❌ Failed to create webhook: ${error.message}`);
+    },
   });
 
   const filteredWebhooks = webhooks?.filter((wh: any) =>

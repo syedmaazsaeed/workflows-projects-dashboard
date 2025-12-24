@@ -48,6 +48,9 @@ export default function WorkflowsPage() {
       setDialogOpen(false);
       setNewWorkflow({ name: '', workflowKey: '', tags: '' });
     },
+    onError: (error: Error) => {
+      alert(`❌ Failed to create workflow: ${error.message}`);
+    },
   });
 
   const filteredWorkflows = workflows?.filter((wf: any) =>
