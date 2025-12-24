@@ -16,20 +16,20 @@ As automation systems grow, workflows tend to become scattered across environmen
 
 ## Features
 
-### 🔄 Workflow Management
+### 1. Workflow Management
 - Upload, store, and version n8n workflow JSON files
 - Inspect workflow structure, nodes, and triggers
 - Visual workflow graph representation
 - Compare workflow versions using a diff viewer
 - Optional synchronization with external n8n instances
 
-### 📁 Project Organization
+### 2. Project Organization
 - Group workflows under projects with unique keys
 - Manage team members using role-based access control (Admin, Developer, Viewer)
 - Global search across workflows, documentation, and webhook events
 - Markdown-based documentation with live preview
 
-### 🔗 Webhook Management
+### 3. Webhook Management
 - Create secure, project-scoped webhook endpoints
 - Multiple routing options:
   - Forward requests to external URLs
@@ -39,13 +39,13 @@ As automation systems grow, workflows tend to become scattered across environmen
 - Real-time event logging
 - Webhook event replay for debugging and testing
 
-###  AI Assisted Search
+### 4. AI Assisted Search
 - Ask questions about workflows and documentation
 - Semantic search powered by pgvector
 - Source-aware responses based on indexed data
 - Supports configurable LLM providers (OpenAI, Anthropic)
 
-### 🔐 Security
+### 5. Security
 - JWT-based authentication
 - Role-based access control
 - Encrypted storage for sensitive secrets
