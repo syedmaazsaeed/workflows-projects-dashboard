@@ -1,4 +1,4 @@
-# Automation Hub
+# Automation Portal
 
 A full-stack web application for managing n8n workflows, projects, webhooks, and AI-powered documentation search.
 
