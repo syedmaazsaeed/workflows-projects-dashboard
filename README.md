@@ -3,10 +3,6 @@
 Automation Portal is a full-stack web application built as an internal tool for managing n8n workflows, related projects, webhooks, and documentation from a single interface.
 As automation systems grow, workflows tend to become scattered across environments, versions are hard to track, webhook behavior becomes unclear, and documentation quickly falls out of sync with reality. This project was created to solve those problems by adding a structured control layer on top of n8n.Automation Portal focuses on visibility, organization, and operational clarity for teams that rely heavily on automation.
 
-<!-- ![Automation Hub](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)
-![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)
-![NestJS](https://img.shields.io/badge/NestJS-10-red.svg) -->
 
 ## What Automation Portal Does
 
@@ -62,12 +58,11 @@ As automation systems grow, workflows tend to become scattered across environmen
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | Next.js 14+ (App Router), TypeScript, Tailwind CSS, shadcn/ui |
+| Frontend | Next.js 14+ (App Router), TypeScript, Tailwind CSS, shadcn/ui
 | Backend | NestJS, TypeScript, BullMQ |
 | Database | PostgreSQL 16+ with pgvector |
 | Cache/Queue | Redis 7 |
-| Storage | Local filesystem / S3-compatible |
-| AI/RAG | OpenAI / Anthropic embeddings + LLM |
+| AI/RAG | OpenAI
 
 ## Quick Start
 
@@ -79,6 +74,7 @@ As automation systems grow, workflows tend to become scattered across environmen
 ### 1. Clone and Configure
 
 git clone (https://github.com/syedmaazsaeed/workflows-projects-dashboard.git)
+
 cd workflows-projects-dashboard
 
 # Environment file
@@ -99,12 +95,6 @@ docker compose logs -f
 # - Backend API: http://localhost:4000
 # - API Docs: http://localhost:4000/api/docs
 ```
-
-<!-- ### 3. Login
-
-Credentials:
-- Email: `admin@automation.hub`
-- Password: `Admin123!` -->
 
 ## Development Setup
 
