@@ -58,11 +58,10 @@ As automation systems grow, workflows tend to become scattered across environmen
 
 | Technology |
 |-------|------------|
-| Frontend | Next.js 14+ (App Router), TypeScript, Tailwind CSS, shadcn/ui
+| Frontend | Next.js 14+ (App Router), TypeScript, Tailwind CSS, shadcn/ui |
 | Backend | NestJS, TypeScript, BullMQ |
 | Database | PostgreSQL 16+ with pgvector |
-| Cache/Queue | Redis 7 |
-| AI/RAG | OpenAI
+| AI/RAG | OpenAI |
 
 ## Quick Start
 
