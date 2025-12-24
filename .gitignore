@@ -1,93 +1,117 @@
+# ======================================
 # Dependencies
+# ======================================
 node_modules/
 **/node_modules/
 frontend/node_modules/
 backend/node_modules/
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Environment variables
+# ======================================
+# Environment variables (NEVER COMMIT)
+# ======================================
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env*.local
-
-# Keep example files
-!env.example
+.env.*
 !.env.example
+!env.example
 
-# IDE and Editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-*.sublime-project
-*.sublime-workspace
-
-# OS files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-Desktop.ini
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-# Testing
-coverage/
-.nyc_output/
-*.lcov
-
+# ======================================
 # Build outputs
+# ======================================
 dist/
 build/
 out/
 .next/
 .vercel/
+
 backend/dist/
 frontend/.next/
 frontend/out/
 frontend/build/
 
-# Temporary files
+# ======================================
+# Logs
+# ======================================
+logs/
+*.log
+
+# ======================================
+# Testing / Coverage
+# ======================================
+coverage/
+.nyc_output/
+*.lcov
+
+# ======================================
+# IDE / Editor files
+# ======================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# ======================================
+# OS files
+# ======================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ======================================
+# Temporary / Cache files
+# ======================================
 *.tmp
 *.temp
 .cache/
 .temp/
+.parcel-cache/
 
+# ======================================
 # Docker
+# ======================================
 .dockerignore
 
-# Database
+# ======================================
+# Database files
+# ======================================
 *.db
 *.sqlite
 *.sqlite3
 
-# Storage (user uploaded files)
+# ======================================
+# User uploads / storage
+# ======================================
 storage/
 uploads/
 
-# Misc
+# ======================================
+# Security-sensitive files
+# ======================================
 *.pem
 *.key
 *.cert
-.cache
-.parcel-cache
 
+# ======================================
+# Documentation policy
+# ONLY README.md is public
+# ======================================
+*.md
+!README.md
+
+# ======================================
+# Local scripts / utilities
+# ======================================
+*.ps1
