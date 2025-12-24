@@ -56,12 +56,14 @@ As automation systems grow, workflows tend to become scattered across environmen
 
 ## Tech Stack
 
-| Technology |
+| Layer | Technology |
 |-------|------------|
 | Frontend | Next.js 14+ (App Router), TypeScript, Tailwind CSS, shadcn/ui |
 | Backend | NestJS, TypeScript, BullMQ |
 | Database | PostgreSQL 16+ with pgvector |
-| AI/RAG | OpenAI |
+| Cache/Queue | Redis 7 |
+| Storage | Local filesystem / S3-compatible |
+| AI/RAG | OpenAI / Anthropic embeddings + LLM |
 
 ## Quick Start
 
