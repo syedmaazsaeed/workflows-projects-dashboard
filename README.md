@@ -1,11 +1,11 @@
 # Automation Hub
 
-A production-ready full-stack web application for managing n8n workflows, projects, webhooks, and AI-powered documentation search.
+A full-stack web application for managing n8n workflows, projects, webhooks, and AI-powered documentation search.
 
-![Automation Hub](https://img.shields.io/badge/version-1.0.0-blue.svg)
+<!-- ![Automation Hub](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)
 ![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)
-![NestJS](https://img.shields.io/badge/NestJS-10-red.svg)
+![NestJS](https://img.shields.io/badge/NestJS-10-red.svg) -->
 
 ## Features
 
@@ -88,16 +88,16 @@ docker compose logs -f
 # - API Docs: http://localhost:4000/api/docs
 ```
 
-### 3. Seed Data (Optional)
+<!-- ### 3. Seed Data (Optional)
 
 ```bash
 # Run seed script to create demo data
 docker compose exec api npm run seed
-```
+``` -->
 
-### 4. Login
+### 3. Login
 
-Default admin credentials (from seed):
+Credentials:
 - Email: `admin@automation.hub`
 - Password: `Admin123!`
 
@@ -232,5 +232,5 @@ See `env.example` for complete documentation. Key variables:
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License
 
