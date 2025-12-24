@@ -136,7 +136,7 @@ All protected endpoints require a Bearer token:
 ```bash
 curl -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "admin@automation.hub", "password": "Admin123!"}'
+  -d '{"email": "admin@gmail.com", "password": "key"}'
 
 # Use the returned token
 curl http://localhost:4000/api/projects \
