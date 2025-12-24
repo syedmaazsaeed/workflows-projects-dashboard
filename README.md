@@ -100,11 +100,11 @@ docker compose logs -f
 # - API Docs: http://localhost:4000/api/docs
 ```
 
-### 3. Login
+<!-- ### 3. Login
 
 Credentials:
 - Email: `admin@automation.hub`
-- Password: `Admin123!`
+- Password: `Admin123!` -->
 
 ## Development Setup
 
