@@ -56,7 +56,7 @@ As automation systems grow, workflows tend to become scattered across environmen
 
 ## Tech Stack
 
-| Layer | Technology |
+| Technology |
 |-------|------------|
 | Frontend | Next.js 14+ (App Router), TypeScript, Tailwind CSS, shadcn/ui
 | Backend | NestJS, TypeScript, BullMQ |
@@ -77,28 +77,10 @@ git clone (https://github.com/syedmaazsaeed/workflows-projects-dashboard.git)
 
 cd workflows-projects-dashboard
 
-# Environment file
-env.example(.env with your settings API Keys)
-
-
-### 2. Start with Docker Compose
-
-```bash
-# Start all services
-docker compose up -d
-
-# Watch logs
-docker compose logs -f
-
-# The app will be available at:
-# - Frontend: http://localhost:3000
-# - Backend API: http://localhost:4000
-# - API Docs: http://localhost:4000/api/docs
-```
 
 ## Development Setup
 
-### Backend (NestJS)
+### Backend
 
 ```bash
 cd backend
@@ -133,13 +115,6 @@ curl http://localhost:4000/api/projects \
   -H "Authorization: Bearer <token>"
 ```
 
-### Webhook Endpoints
-
-Public webhook receiver:
-```bash
-POST /api/webhooks/:projectKey/:hookKey
-Header: x-webhook-secret: <secret>
-```
 
 ## Environment Variables
 
