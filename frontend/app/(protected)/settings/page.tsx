@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/auth';
+import { api } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,10 +25,27 @@ import {
   Moon,
   Sun,
   Monitor,
+  Users,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  AlertCircle,
 } from 'lucide-react';
+import { useToast } from '@/lib/use-toast';
+
+interface PendingUser {
+  id: string;
+  name: string;
+  email: string;
+  emailVerified: boolean;
+  isApproved: boolean;
+  createdAt: string;
+  role: string;
+}
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [theme, setTheme] = useState('dark');
@@ -37,6 +55,18 @@ export default function SettingsPage() {
     webhookAlerts: true,
     workflowUpdates: true,
   });
+  const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
+  const [approvedUsers, setApprovedUsers] = useState<PendingUser[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [processingUser, setProcessingUser] = useState<string | null>(null);
+  
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordSaved, setPasswordSaved] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
@@ -56,6 +86,133 @@ export default function SettingsPage() {
     { keys: ['Esc'], action: 'Close modal/dialog' },
   ];
 
+  const isAdmin = user?.role === 'ADMIN';
+
+  // Load users for admins
+  useEffect(() => {
+    if (isAdmin) {
+      loadPendingUsers();
+      loadApprovedUsers();
+    }
+  }, [isAdmin]);
+
+  const loadPendingUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const users = await api.getPendingUsers();
+      setPendingUsers(users);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load pending users',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const loadApprovedUsers = async () => {
+    try {
+      const users = await api.getApprovedUsers();
+      setApprovedUsers(users);
+    } catch (error) {
+      // Silently fail for approved users
+      console.error('Failed to load approved users', error);
+    }
+  };
+
+  const handleApproveUser = async (userId: string, approved: boolean) => {
+    setProcessingUser(userId);
+    try {
+      await api.approveUser(userId, approved);
+      toast({
+        title: approved ? 'User approved' : 'User rejected',
+        description: approved 
+          ? 'The user has been approved and can now log in. An email notification has been sent.'
+          : 'The user has been rejected and removed from pending list. An email notification has been sent.',
+      });
+      // Reload both lists
+      await loadPendingUsers();
+      await loadApprovedUsers();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: `Failed to ${approved ? 'approve' : 'reject'} user`,
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessingUser(null);
+    }
+  };
+
+  const validatePassword = (pwd: string): string | null => {
+    if (pwd.length < 8) {
+      return 'Password must be at least 8 characters long';
+    }
+    if (!/[a-z]/.test(pwd)) {
+      return 'Password must contain at least one lowercase letter';
+    }
+    if (!/[A-Z]/.test(pwd)) {
+      return 'Password must contain at least one uppercase letter';
+    }
+    if (!/[0-9]/.test(pwd)) {
+      return 'Password must contain at least one number';
+    }
+    if (!/[@$!%*?&]/.test(pwd)) {
+      return 'Password must contain at least one special character (@$!%*?&)';
+    }
+    return null;
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSaved(false);
+
+    // Validate passwords
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('All fields are required');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+
+    const passwordValidationError = validatePassword(newPassword);
+    if (passwordValidationError) {
+      setPasswordError(passwordValidationError);
+      return;
+    }
+
+    setPasswordSaving(true);
+
+    try {
+      await api.changePassword(currentPassword, newPassword);
+      setPasswordSaved(true);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      toast({
+        title: 'Password updated',
+        description: 'Your password has been changed successfully.',
+      });
+      setTimeout(() => setPasswordSaved(false), 3000);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update password';
+      setPasswordError(errorMessage);
+      toast({
+        title: 'Password update failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -67,7 +224,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} lg:w-[${isAdmin ? '600' : '500'}px]`}>
           <TabsTrigger value="profile" className="gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">Profile</span>
@@ -84,6 +241,12 @@ export default function SettingsPage() {
             <Keyboard className="h-4 w-4" />
             <span className="hidden sm:inline">Shortcuts</span>
           </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="admin" className="gap-2">
+              <Shield className="h-4 w-4" />
+              <span className="hidden sm:inline">Admin</span>
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Profile Tab */}
@@ -139,6 +302,93 @@ export default function SettingsPage() {
                   </>
                 )}
               </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Change Password</CardTitle>
+              <CardDescription>
+                Update your account password
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handlePasswordChange} className="space-y-4">
+                {passwordError && (
+                  <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    {passwordError}
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword">Current Password</Label>
+                  <Input 
+                    id="currentPassword" 
+                    type="password" 
+                    placeholder="••••••••"
+                    value={currentPassword}
+                    onChange={(e) => {
+                      setCurrentPassword(e.target.value);
+                      setPasswordError('');
+                    }}
+                    disabled={passwordSaving}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <Input 
+                    id="newPassword" 
+                    type="password" 
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      setPasswordError('');
+                    }}
+                    disabled={passwordSaving}
+                    required
+                    minLength={8}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Password must contain: uppercase, lowercase, number, and special character (@$!%*?&)
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <Input 
+                    id="confirmPassword" 
+                    type="password" 
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      setPasswordError('');
+                    }}
+                    disabled={passwordSaving}
+                    required
+                    minLength={8}
+                  />
+                </div>
+                <Button type="submit" disabled={passwordSaving}>
+                  {passwordSaving ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                  ) : passwordSaved ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      Password Updated!
+                    </>
+                  ) : (
+                    <>
+                      <Key className="h-4 w-4 mr-2" />
+                      Update Password
+                    </>
+                  )}
+                </Button>
+              </form>
             </CardContent>
           </Card>
 
@@ -335,6 +585,174 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Admin Tab */}
+        {isAdmin && (
+          <TabsContent value="admin" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Pending User Approvals</CardTitle>
+                    <CardDescription>
+                      Review and approve or reject new user registrations
+                    </CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      await loadPendingUsers();
+                      await loadApprovedUsers();
+                    }}
+                    disabled={loadingUsers}
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${loadingUsers ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loadingUsers ? (
+                  <div className="flex items-center justify-center py-8">
+                    <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : pendingUsers.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <Users className="h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">No pending user approvals</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {pendingUsers.map((pendingUser) => (
+                      <div
+                        key={pendingUser.id}
+                        className="flex items-center justify-between p-4 rounded-lg border border-border"
+                      >
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary to-purple-600 text-lg font-bold text-white">
+                            {pendingUser.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-medium">{pendingUser.name}</h3>
+                              <Badge variant="secondary" className="text-xs">
+                                {pendingUser.role}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2">{pendingUser.email}</p>
+                            <div className="flex items-center gap-3">
+                              {pendingUser.emailVerified ? (
+                                <Badge variant="outline" className="text-xs">
+                                  <CheckCircle2 className="h-3 w-3 mr-1 text-green-600" />
+                                  Email Verified
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs">
+                                  <Clock className="h-3 w-3 mr-1 text-yellow-600" />
+                                  Email Not Verified
+                                </Badge>
+                              )}
+                              <span className="text-xs text-muted-foreground">
+                                Registered {new Date(pendingUser.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleApproveUser(pendingUser.id, false)}
+                            disabled={processingUser === pendingUser.id}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Reject
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleApproveUser(pendingUser.id, true)}
+                            disabled={processingUser === pendingUser.id}
+                          >
+                            {processingUser === pendingUser.id ? (
+                              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="h-4 w-4 mr-2" />
+                            )}
+                            Approve
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Approved Users Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Approved Users</CardTitle>
+                <CardDescription>
+                  Users who have been approved and can access the system
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {approvedUsers.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <Users className="h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">No approved users yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {approvedUsers.map((approvedUser) => (
+                      <div
+                        key={approvedUser.id}
+                        className="flex items-center justify-between p-4 rounded-lg border border-border bg-green-500/5"
+                      >
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-green-600 text-lg font-bold text-white">
+                            {approvedUser.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-medium">{approvedUser.name}</h3>
+                              <Badge variant="secondary" className="text-xs">
+                                {approvedUser.role}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                Approved
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2">{approvedUser.email}</p>
+                            <div className="flex items-center gap-3">
+                              {approvedUser.emailVerified ? (
+                                <Badge variant="outline" className="text-xs">
+                                  <CheckCircle2 className="h-3 w-3 mr-1 text-green-600" />
+                                  Email Verified
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs">
+                                  <Clock className="h-3 w-3 mr-1 text-yellow-600" />
+                                  Email Not Verified
+                                </Badge>
+                              )}
+                              <span className="text-xs text-muted-foreground">
+                                Approved {new Date(approvedUser.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

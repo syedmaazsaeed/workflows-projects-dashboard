@@ -42,8 +42,9 @@ export const useAuth = create<AuthState>()(
       },
 
       register: async (name, email, password) => {
-        const response = await api.register(name, email, password);
-        set({ user: response.user as User, token: response.accessToken, isLoading: false });
+        // Register doesn't return a token - user needs to verify email first
+        await api.register(name, email, password);
+        // Don't set user or token - user must verify email and wait for admin approval
       },
 
       logout: async () => {

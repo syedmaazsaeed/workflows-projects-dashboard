@@ -20,6 +20,7 @@ import {
   Plus,
   Settings,
 } from 'lucide-react';
+import { Breadcrumbs } from '@/components/breadcrumbs';
 
 export default function ProjectPage() {
   const params = useParams();
@@ -104,16 +105,17 @@ export default function ProjectPage() {
 
   return (
     <div className="space-y-8">
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        items={[
+          { label: 'Projects', href: '/projects' },
+          { label: project.name || projectKey },
+        ]}
+      />
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-muted-foreground mb-2">
-            <Link href="/projects" className="hover:text-foreground">
-              Projects
-            </Link>
-            <span>/</span>
-            <span>{projectKey}</span>
-          </div>
           <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
           {project.description && (
             <p className="text-muted-foreground mt-2 max-w-2xl">

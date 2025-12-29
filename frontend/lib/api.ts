@@ -31,7 +31,8 @@ class ApiClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    retries: number = 3
   ): Promise<T> {
     const token = this.getToken();
     const headers: HeadersInit = {
@@ -43,24 +44,78 @@ class ApiClient {
       (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_URL}/api${endpoint}`, {
-      ...options,
-      headers,
-    });
+    let lastError: Error | null = null;
 
-    if (!response.ok) {
-      const error: ApiError = await response.json().catch(() => ({
-        success: false,
-        error: { code: 'UNKNOWN', message: 'An error occurred' },
-      }));
-      throw new Error(error.error?.message || 'Request failed');
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const response = await fetch(`${API_URL}/api${endpoint}`, {
+          ...options,
+          headers,
+        });
+
+        if (!response.ok) {
+          // Don't retry on client errors (4xx) except 429 (rate limit)
+          if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+            let errorData: ApiError;
+            try {
+              errorData = await response.json();
+            } catch {
+              errorData = {
+                success: false,
+                error: { code: 'UNKNOWN', message: 'An error occurred' },
+              };
+            }
+            
+            // Handle NestJS validation errors (array format)
+            if (Array.isArray(errorData)) {
+              const messages = errorData
+                .map((err: any) => err.message || err)
+                .filter(Boolean)
+                .join(', ');
+              throw new Error(messages || 'Validation failed');
+            }
+            
+            // Handle standard error format
+            const errorMessage = errorData.error?.message || errorData.message || 'Request failed';
+            throw new Error(errorMessage);
+          }
+
+          // Retry on server errors (5xx) and rate limits (429)
+          if (response.status >= 500 || response.status === 429) {
+            if (attempt < retries) {
+              const delay = Math.min(1000 * Math.pow(2, attempt), 10000); // Exponential backoff, max 10s
+              await new Promise((resolve) => setTimeout(resolve, delay));
+              continue;
+            }
+          }
+
+          const error: ApiError = await response.json().catch(() => ({
+            success: false,
+            error: { code: 'UNKNOWN', message: 'An error occurred' },
+          }));
+          throw new Error(error.error?.message || 'Request failed');
+        }
+
+        // Handle empty responses
+        const text = await response.text();
+        if (!text) return {} as T;
+        
+        return JSON.parse(text);
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error('Unknown error');
+        
+        // Retry on network errors
+        if (attempt < retries && (error instanceof TypeError || error instanceof DOMException)) {
+          const delay = Math.min(1000 * Math.pow(2, attempt), 10000);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+
+        throw lastError;
+      }
     }
 
-    // Handle empty responses
-    const text = await response.text();
-    if (!text) return {} as T;
-    
-    return JSON.parse(text);
+    throw lastError || new Error('Request failed after retries');
   }
 
   // Auth
@@ -77,15 +132,58 @@ class ApiClient {
   }
 
   async register(name: string, email: string, password: string) {
-    const response = await this.request<{
-      accessToken: string;
-      user: { id: string; email: string; name: string; role: string };
-    }>('/auth/register', {
+    try {
+      const response = await this.request<{
+        message: string;
+        email: string;
+      }>('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ name, email, password }),
+      });
+      return response;
+    } catch (error) {
+      // Extract more detailed error message
+      if (error instanceof Error) {
+        // Check if it's a validation error from the backend
+        if (error.message.includes('Password must') || error.message.includes('password')) {
+          throw new Error(error.message);
+        }
+        if (error.message.includes('already exists') || error.message.includes('email')) {
+          throw new Error('An account with this email already exists. Please try logging in instead.');
+        }
+        throw error;
+      }
+      throw new Error('Registration failed. Please check your connection and try again.');
+    }
+  }
+
+  async verifyEmail(email: string, code: string) {
+    return this.request<{ message: string }>('/auth/verify-email', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ email, code }),
     });
-    this.setToken(response.accessToken);
-    return response;
+  }
+
+  async resendVerificationCode(email: string) {
+    return this.request<{ message: string }>('/auth/resend-verification', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async getPendingUsers() {
+    return this.request<any[]>('/auth/pending-users');
+  }
+
+  async getApprovedUsers() {
+    return this.request<any[]>('/auth/approved-users');
+  }
+
+  async approveUser(userId: string, approved: boolean) {
+    return this.request<any>(`/auth/approve-user/${userId}`, {
+      method: 'POST',
+      body: JSON.stringify({ approved }),
+    });
   }
 
   async logout() {
@@ -95,6 +193,13 @@ class ApiClient {
 
   async getMe() {
     return this.request<{ id: string; email: string; name: string; role: string }>('/auth/me');
+  }
+
+  async changePassword(currentPassword: string, newPassword: string) {
+    return this.request<{ message: string }>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
   }
 
   // Projects

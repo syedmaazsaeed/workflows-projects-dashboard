@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDateTime, formatRelativeTime } from '@/lib/utils';
+import { Breadcrumbs } from '@/components/breadcrumbs';
 import {
   Workflow,
   Upload,
@@ -23,6 +24,8 @@ import {
   Zap,
   ArrowRight,
 } from 'lucide-react';
+import { UploadProgress } from '@/components/upload-progress';
+import { useToast } from '@/lib/use-toast';
 
 export default function WorkflowDetailPage() {
   const params = useParams();
@@ -31,6 +34,10 @@ export default function WorkflowDetailPage() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadFileName, setUploadFileName] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const { data: workflow, isLoading: workflowLoading } = useQuery({
     queryKey: ['workflow', projectKey, workflowKey],
@@ -47,14 +54,47 @@ export default function WorkflowDetailPage() {
     if (!file) return;
 
     setUploading(true);
+    setUploadProgress(0);
+    setUploadError(null);
+    setUploadFileName(file.name);
+
     try {
+      // Simulate progress for better UX
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
       await api.uploadWorkflowJson(projectKey, workflowKey, file);
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      
       queryClient.invalidateQueries({ queryKey: ['workflowVersions', projectKey, workflowKey] });
       queryClient.invalidateQueries({ queryKey: ['workflow', projectKey, workflowKey] });
-      alert('✅ Workflow JSON uploaded successfully!');
+      
+      toast({
+        title: 'Upload successful',
+        description: 'Workflow JSON uploaded successfully!',
+      });
+
+      setTimeout(() => {
+        setUploadProgress(0);
+        setUploadFileName(null);
+      }, 2000);
     } catch (error) {
       console.error('Upload failed:', error);
-      alert(`❌ Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setUploadError(error instanceof Error ? error.message : 'Unknown error');
+      toast({
+        title: 'Upload failed',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive',
+      });
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
@@ -96,22 +136,19 @@ export default function WorkflowDetailPage() {
 
   return (
     <div className="space-y-8">
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        items={[
+          { label: 'Projects', href: '/projects' },
+          { label: projectKey, href: `/projects/${projectKey}` },
+          { label: 'Workflows', href: `/projects/${projectKey}/workflows` },
+          { label: workflow.name || workflowKey },
+        ]}
+      />
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-muted-foreground mb-2">
-            <Link href="/projects" className="hover:text-foreground">Projects</Link>
-            <span>/</span>
-            <Link href={`/projects/${projectKey}`} className="hover:text-foreground">
-              {projectKey}
-            </Link>
-            <span>/</span>
-            <Link href={`/projects/${projectKey}/workflows`} className="hover:text-foreground">
-              Workflows
-            </Link>
-            <span>/</span>
-            <span>{workflowKey}</span>
-          </div>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold tracking-tight">{workflow.name}</h1>
             <Badge variant={workflow.status === 'ACTIVE' ? 'success' : 'secondary'}>
@@ -126,18 +163,27 @@ export default function WorkflowDetailPage() {
             </div>
           )}
         </div>
-        <div className="flex gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            className="hidden"
-            onChange={handleFileUpload}
-          />
-          <Button onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-            <Upload className="h-4 w-4 mr-2" />
-            {uploading ? 'Uploading...' : 'Upload JSON'}
-          </Button>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={handleFileUpload}
+            />
+            <Button onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+              <Upload className="h-4 w-4 mr-2" />
+              {uploading ? 'Uploading...' : 'Upload JSON'}
+            </Button>
+          </div>
+          {(uploading || uploadProgress > 0 || uploadError) && (
+            <UploadProgress
+              progress={uploadProgress}
+              fileName={uploadFileName || undefined}
+              error={uploadError || undefined}
+            />
+          )}
         </div>
       </div>
 

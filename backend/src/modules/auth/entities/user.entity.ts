@@ -26,5 +26,18 @@ export class User extends BaseEntity {
     default: UserRole.VIEWER,
   })
   role: UserRole;
+
+  @Column({ name: 'email_verified', type: 'boolean', default: false })
+  emailVerified: boolean;
+
+  @Column({ name: 'is_approved', type: 'boolean', default: false })
+  isApproved: boolean;
+
+  @Column({ name: 'verification_code', type: 'text', nullable: true })
+  @Exclude()
+  verificationCode: string | null;
+
+  @Column({ name: 'verification_code_expiry', type: 'timestamptz', nullable: true })
+  verificationCodeExpiry: Date | null;
 }
 

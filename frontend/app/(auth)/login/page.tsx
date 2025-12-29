@@ -78,12 +78,17 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Signing in...' : 'Sign in'}
             </Button>
-            <p className="text-sm text-muted-foreground">
-              Don&apos;t have an account?{' '}
-              <Link href="/register" className="text-primary hover:underline">
-                Register
+            <div className="space-y-2 text-center">
+              <p className="text-sm text-muted-foreground">
+                Don&apos;t have an account?{' '}
+                <Link href="/register" className="text-primary hover:underline">
+                  Register
+                </Link>
+              </p>
+              <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                Forgot password?
               </Link>
-            </p>
+            </div>
           </CardFooter>
         </form>
       </Card>

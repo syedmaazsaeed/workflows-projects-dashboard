@@ -11,6 +11,7 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { EmailService } from './services/email.service';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
   controllers: [AuthController],
   providers: [
     AuthService,
+    EmailService,
     JwtStrategy,
     {
       provide: APP_GUARD,

@@ -31,18 +31,20 @@ async function seed() {
 
     // Create admin user
     const adminId = uuidv4();
-    const passwordHash = await bcrypt.hash('Admin123!', 12);
+    const passwordHash = await bcrypt.hash('03106902002M@@z', 12);
 
     await queryRunner.query(`
-      INSERT INTO users (id, name, email, password_hash, role)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO users (id, name, email, password_hash, role, email_verified, is_approved)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       ON CONFLICT (email) DO UPDATE SET
         name = EXCLUDED.name,
         password_hash = EXCLUDED.password_hash,
-        role = EXCLUDED.role
-    `, [adminId, 'Admin User', 'admin@automation.hub', passwordHash, 'ADMIN']);
+        role = EXCLUDED.role,
+        email_verified = EXCLUDED.email_verified,
+        is_approved = EXCLUDED.is_approved
+    `, [adminId, 'Admin User', 'syedmaazsaeed@gmail.com', passwordHash, 'ADMIN', true, true]);
 
-    console.log('✅ Admin user created: admin@automation.hub / Admin123!');
+    console.log('✅ Admin user created: syedmaazsaeed@gmail.com');
 
     // Create a sample project
     const projectId = uuidv4();
@@ -246,8 +248,8 @@ The email-notification workflow demonstrates:
 
     console.log('\n🎉 Seed completed successfully!');
     console.log('\n📝 Login credentials:');
-    console.log('   Email: admin@automation.hub');
-    console.log('   Password: Admin123!');
+    console.log('   Email: syedmaazsaeed@gmail.com');
+    console.log('   Password: 03106902002M@@z');
 
   } catch (error) {
     console.error('❌ Seed failed:', error);
